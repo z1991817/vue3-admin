@@ -252,7 +252,7 @@ export const dynamicRoutes: RouteRecordRaw[] = [
   {
     path: "/class-management",
     component: Layouts,
-    redirect: "/classification/classList",
+    redirect: "/class-management/list",
     name: "ClassManagement",
     meta: {
       title: "分类管理",
@@ -278,6 +278,31 @@ export const dynamicRoutes: RouteRecordRaw[] = [
         name: "ImageList",
         meta: {
           title: "图片库",
+          roles: ["admin"]
+        }
+      }
+    ]
+  },
+  {
+    path: "/modelManagement",
+    component: Layouts,
+    redirect: "/modelManagement/list",
+    name: "ModelManagement",
+    meta: {
+      title: "模型管理",
+      elIcon: "FolderOpened",
+      // 可以在根路由中设置角色
+      roles: ["admin", "editor"],
+      alwaysShow: true
+    },
+    children: [
+      {
+        path: "list",
+        component: () => import("@/pages/modelManagement/list.vue"),
+        name: "ModelManagementList",
+        meta: {
+          title: "模型列表",
+          // 或者在子路由中设置角色
           roles: ["admin"]
         }
       }
