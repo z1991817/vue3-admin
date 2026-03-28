@@ -1,6 +1,7 @@
-ï»¿export interface CreateOrUpdateModelRequestData {
+export interface CreateOrUpdateModelRequestData {
   id?: number
   name: string
+  model_key: string
   manufacturer?: string
   description?: string
   aspect_ratios: string[]
@@ -9,17 +10,20 @@
 }
 
 export interface ModelRequestData {
-  /** å½“å‰é¡µç  */
+  /** µ±Ç°Ò³Âë */
   currentPage: number
-  /** æŸ¥è¯¢æ¡æ•° */
+  /** ²éÑ¯ÌõÊı */
   size: number
-  /** æŸ¥è¯¢å‚æ•°ï¼šæ¨¡å‹åç§° */
+  /** ²éÑ¯²ÎÊı£ºÄ£ĞÍÃû³Æ */
   name?: string
+  /** ²éÑ¯²ÎÊı£ºÄ£ĞÍ key */
+  model_key?: string
 }
 
 export interface ModelData {
   id: number
   name: string
+  model_key: string
   manufacturer?: string
   description: string
   aspect_ratio: string[]

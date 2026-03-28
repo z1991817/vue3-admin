@@ -9,6 +9,7 @@ const textMap = {
   edit: "编辑模型",
   create: "新增模型",
   name: "名称",
+  modelKey: "模型Key",
   manufacturer: "厂家",
   description: "描述",
   aspectRatio: "尺寸",
@@ -27,6 +28,7 @@ const textMap = {
   cancel: "取消",
   confirm: "确定",
   inputName: "请输入模型名称",
+  inputModelKey: "请输入模型Key",
   inputManufacturer: "请输入厂家",
   inputDescription: "请输入描述",
   inputAspectRatio: "请选择尺寸",
@@ -49,6 +51,14 @@ function normalizeConsumePoints(value) {
 
 function normalizeStatus(value) {
   return Number(value) === 0 ? 0 : 1
+}
+
+function normalizeAspectRatio(value) {
+  if (Array.isArray(value)) return value
+  if (typeof value === "string") {
+    return value.split(",").map(item => item.trim()).filter(Boolean)
+  }
+  return []
 }
 
 const xGridDom = useTemplateRef("xGridDom")
@@ -105,6 +115,11 @@ const xGridOpt = reactive({
     {
       field: "name",
       title: textMap.name,
+      minWidth: "180px"
+    },
+    {
+      field: "model_key",
+      title: textMap.modelKey,
       minWidth: "180px"
     },
     {
@@ -193,9 +208,10 @@ const crudStore = reactive({
       xModalOpt.title = textMap.edit
       xFormOpt.data.id = row.id
       xFormOpt.data.name = row.name
+      xFormOpt.data.model_key = row.model_key || ""
       xFormOpt.data.manufacturer = row.manufacturer || ""
       xFormOpt.data.description = row.description
-      xFormOpt.data.aspect_ratio = row.aspect_ratio ? row.aspect_ratio.split(",").map(item => item.trim()).filter(Boolean) : []
+      xFormOpt.data.aspect_ratio = normalizeAspectRatio(row.aspect_ratio)
       xFormOpt.data.status = normalizeStatus(row.status)
       xFormOpt.data.consume_points = normalizeConsumePoints(row.consume_points)
     } else {
@@ -203,6 +219,7 @@ const crudStore = reactive({
       xModalOpt.title = textMap.create
       xFormOpt.data.id = undefined
       xFormOpt.data.name = ""
+      xFormOpt.data.model_key = ""
       xFormOpt.data.manufacturer = ""
       xFormOpt.data.description = ""
       xFormOpt.data.aspect_ratio = []
@@ -222,6 +239,7 @@ const crudStore = reactive({
       const { aspect_ratio, ...restData } = xFormOpt.data
       const payload = {
         ...restData,
+        model_key: xFormOpt.data.model_key.trim(),
         aspect_ratios: aspect_ratio,
         status: normalizeStatus(xFormOpt.data.status),
         consume_points: normalizeConsumePoints(xFormOpt.data.consume_points)
@@ -296,6 +314,7 @@ const xFormOpt = reactive({
   data: {
     id: undefined,
     name: "",
+    model_key: "",
     manufacturer: "",
     description: "",
     aspect_ratio: [],
@@ -316,7 +335,20 @@ const xFormOpt = reactive({
         }
       }
     ],
-    size: [
+    model_key: [
+      {
+        required: true,
+        validator: ({ itemValue }) => {
+          switch (true) {
+            case !itemValue:
+              return new Error(textMap.inputModelKey)
+            case !itemValue.trim():
+              return new Error(textMap.invalidBlank)
+          }
+        }
+      }
+    ],
+    aspect_ratio: [
       {
         required: true,
         validator: ({ itemValue }) => {
@@ -359,6 +391,16 @@ const xFormOpt = reactive({
         name: "$input",
         props: {
           placeholder: textMap.inputName
+        }
+      }
+    },
+    {
+      field: "model_key",
+      title: textMap.modelKey,
+      itemRender: {
+        name: "$input",
+        props: {
+          placeholder: textMap.inputModelKey
         }
       }
     },
@@ -484,10 +526,3 @@ const xFormOpt = reactive({
 </template>
 
 <style lang="sass" scoped></style>
-
-
-
-
-
-
-
