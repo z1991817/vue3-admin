@@ -6,10 +6,6 @@ import { flatMultiLevelRoutes } from "./helper"
 
 const Layouts = () => import("@/layouts/index.vue")
 
-/**
- * @name 常驻路由
- * @description 除了 redirect/403/404/login 等隐藏页面，其他页面建议设置唯一的 Name 属性
- */
 export const constantRoutes: RouteRecordRaw[] = [
   {
     path: "/redirect",
@@ -183,11 +179,6 @@ export const constantRoutes: RouteRecordRaw[] = [
   }
 ]
 
-/**
- * @name 动态路由
- * @description 用来放置有权限 (Roles 属性) 的路由
- * @description 必须带有唯一的 Name 属性
- */
 export const dynamicRoutes: RouteRecordRaw[] = [
   {
     path: "/permission",
@@ -197,7 +188,6 @@ export const dynamicRoutes: RouteRecordRaw[] = [
     meta: {
       title: "权限演示",
       elIcon: "Lock",
-      // 可以在根路由中设置角色
       roles: ["admin", "editor"],
       alwaysShow: true
     },
@@ -208,7 +198,6 @@ export const dynamicRoutes: RouteRecordRaw[] = [
         name: "PermissionPageLevel",
         meta: {
           title: "页面级",
-          // 或者在子路由中设置角色
           roles: ["admin"]
         }
       },
@@ -218,21 +207,19 @@ export const dynamicRoutes: RouteRecordRaw[] = [
         name: "PermissionButtonLevel",
         meta: {
           title: "按钮级",
-          // 如果未设置角色，则表示：该页面不需要权限，但会继承根路由的角色
           roles: undefined
         }
       }
     ]
   },
   {
-    path: "/userList",
+    path: "/admin-management",
     component: Layouts,
-    redirect: "/userList/list",
-    name: "UserList",
+    redirect: "/admin-management/list",
+    name: "AdminManagement",
     meta: {
-      title: "客户列表",
-      elIcon: "User",
-      // 可以在根路由中设置角色
+      title: "管理员管理",
+      elIcon: "UserFilled",
       roles: ["admin", "editor"],
       alwaysShow: true
     },
@@ -240,11 +227,19 @@ export const dynamicRoutes: RouteRecordRaw[] = [
       {
         path: "list",
         component: () => import("@/pages/userList/index.vue"),
-        name: "UserListList",
+        name: "AdminManagementList",
         meta: {
-          title: "用户列表",
-          // 或者在子路由中设置角色
+          title: "管理员列表",
           roles: ["admin"]
+        }
+      },
+      {
+        path: "profile",
+        component: () => import("@/pages/admin/profile.vue"),
+        name: "AdminProfile",
+        meta: {
+          title: "个人资料",
+          roles: ["admin", "editor"]
         }
       }
     ]
@@ -257,7 +252,6 @@ export const dynamicRoutes: RouteRecordRaw[] = [
     meta: {
       title: "分类管理",
       elIcon: "FolderOpened",
-      // 可以在根路由中设置角色
       roles: ["admin", "editor"],
       alwaysShow: true
     },
@@ -268,7 +262,6 @@ export const dynamicRoutes: RouteRecordRaw[] = [
         name: "ClassList",
         meta: {
           title: "分类列表",
-          // 或者在子路由中设置角色
           roles: ["admin"]
         }
       },
@@ -290,8 +283,7 @@ export const dynamicRoutes: RouteRecordRaw[] = [
     name: "ModelManagement",
     meta: {
       title: "模型管理",
-      elIcon: "FolderOpened",
-      // 可以在根路由中设置角色
+      elIcon: "Cpu",
       roles: ["admin", "editor"],
       alwaysShow: true
     },
@@ -302,24 +294,99 @@ export const dynamicRoutes: RouteRecordRaw[] = [
         name: "ModelManagementList",
         meta: {
           title: "模型列表",
-          // 或者在子路由中设置角色
           roles: ["admin"]
+        }
+      }
+    ]
+  },
+  {
+    path: "/order-management",
+    component: Layouts,
+    redirect: "/order-management/list",
+    name: "OrderManagement",
+    meta: {
+      title: "订单管理",
+      elIcon: "Tickets",
+      roles: ["admin", "editor"],
+      alwaysShow: true
+    },
+    children: [
+      {
+        path: "list",
+        component: () => import("@/pages/orderManagement/list.vue"),
+        name: "OrderManagementList",
+        meta: {
+          title: "订单列表",
+          roles: ["admin", "editor"]
+        }
+      },
+      {
+        path: "detail/:id",
+        component: () => import("@/pages/orderManagement/detail.vue"),
+        name: "OrderManagementDetail",
+        meta: {
+          title: "订单详情",
+          hidden: true,
+          roles: ["admin", "editor"],
+          activeMenu: "/order-management/list"
+        }
+      }
+    ]
+  },
+  {
+    path: "/customer-management",
+    component: Layouts,
+    redirect: "/customer-management/list",
+    name: "CustomerManagement",
+    meta: {
+      title: "客户管理",
+      elIcon: "User",
+      roles: ["admin", "editor"],
+      alwaysShow: true
+    },
+    children: [
+      {
+        path: "list",
+        component: () => import("@/pages/customerManagement/list.vue"),
+        name: "CustomerManagementList",
+        meta: {
+          title: "客户列表",
+          roles: ["admin", "editor"]
+        }
+      },
+      {
+        path: "detail/:id",
+        component: () => import("@/pages/customerManagement/detail.vue"),
+        name: "CustomerManagementDetail",
+        meta: {
+          title: "客户详情",
+          hidden: true,
+          roles: ["admin", "editor"],
+          activeMenu: "/customer-management/list"
+        }
+      },
+      {
+        path: ":id/points-logs",
+        component: () => import("@/pages/customerManagement/pointsLogs.vue"),
+        name: "CustomerPointsLogs",
+        meta: {
+          title: "积分流水",
+          hidden: true,
+          roles: ["admin", "editor"],
+          activeMenu: "/customer-management/list"
         }
       }
     ]
   }
 ]
 
-/** 路由实例 */
 export const router = createRouter({
   history: routerConfig.history,
   routes: routerConfig.thirdLevelRouteCache ? flatMultiLevelRoutes(constantRoutes) : constantRoutes
 })
 
-/** 重置路由 */
 export function resetRouter() {
   try {
-    // 注意：所有动态路由路由必须带有 Name 属性，否则可能会不能完全重置干净
     router.getRoutes().forEach((route) => {
       const { name, meta } = route
       if (name && meta.roles?.length) {
@@ -327,10 +394,8 @@ export function resetRouter() {
       }
     })
   } catch {
-    // 强制刷新浏览器也行，只是交互体验不是很好
     location.reload()
   }
 }
 
-// 注册路由导航守卫
 registerNavigationGuard(router)

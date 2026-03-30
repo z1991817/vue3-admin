@@ -6,34 +6,33 @@ import ThemeSwitch from "@@/components/ThemeSwitch/index.vue"
 import { useDevice } from "@@/composables/useDevice"
 import { useLayoutMode } from "@@/composables/useLayoutMode"
 import { UserFilled } from "@element-plus/icons-vue"
+import { logoutApi } from "@/common/apis/users"
 import { useAppStore } from "@/pinia/stores/app"
 import { useSettingsStore } from "@/pinia/stores/settings"
 import { useUserStore } from "@/pinia/stores/user"
 import { Breadcrumb, Hamburger, Sidebar } from "../index"
 
 const { isMobile } = useDevice()
-
 const { isTop } = useLayoutMode()
-
 const router = useRouter()
-
 const appStore = useAppStore()
-
 const userStore = useUserStore()
-
 const settingsStore = useSettingsStore()
-
 const { showNotify, showThemeSwitch, showScreenfull, showSearchMenu } = storeToRefs(settingsStore)
 
-/** 切换侧边栏 */
 function toggleSidebar() {
   appStore.toggleSidebar(false)
 }
 
-/** 登出 */
-function logout() {
-  userStore.logout()
-  router.push("/login")
+async function logout() {
+  try {
+    await logoutApi()
+  } catch {
+    // 服务端退出失败时仍然清理本地登录态
+  } finally {
+    userStore.logout()
+    router.push("/login")
+  }
 }
 </script>
 
@@ -55,10 +54,13 @@ function logout() {
       <el-dropdown>
         <div class="right-menu-item user">
           <el-avatar :icon="UserFilled" :size="30" />
-          <span>{{ userStore.username }}</span>
+          <span>{{ userStore.nickname || userStore.username }}</span>
         </div>
         <template #dropdown>
           <el-dropdown-menu>
+            <el-dropdown-item @click="router.push('/admin-management/profile')">
+              个人资料
+            </el-dropdown-item>
             <a target="_blank" href="https://github.com/un-pany/v3-admin-vite">
               <el-dropdown-item>GitHub</el-dropdown-item>
             </a>
@@ -91,14 +93,12 @@ function logout() {
   }
   .breadcrumb {
     flex: 1;
-    // 参考 Bootstrap 的响应式设计将宽度设置为 576
     @media screen and (max-width: 576px) {
       display: none;
     }
   }
   .sidebar {
     flex: 1;
-    // 设置 min-width 是为了让 Sidebar 里的 el-menu 宽度自适应
     min-width: 0px;
     :deep(.el-menu) {
       background-color: transparent;
