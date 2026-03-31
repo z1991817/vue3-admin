@@ -61,6 +61,10 @@ export interface CustomerPointsLogsRequestData {
   changeType?: string
 }
 
+export interface CustomerRechargeRequestData {
+  points: number
+}
+
 export type CustomerListResponseData = ApiResponseData<{
   total: number
   page: number
@@ -77,3 +81,5 @@ export type CustomerPointsLogsResponseData = ApiResponseData<{
   pageSize: number
   totalPages: number
 }>
+
+export type CustomerRechargeResponseData = ApiResponseData<any>

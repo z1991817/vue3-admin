@@ -1,5 +1,5 @@
 <script setup>
-import { getCustomerListApi } from "@/common/apis/customers"
+import { getCustomerListApi, rechargeCustomerApi } from "@/common/apis/customers"
 
 const router = useRouter()
 const xGridDom = useTemplateRef("xGridDom")
@@ -63,7 +63,7 @@ const xGridOpt = reactive({
     { field: "total_recharge_amount", title: "累计充值金额", width: "130px" },
     { field: "status", title: "状态", width: "100px", slots: { default: "status-column" } },
     { field: "last_paid_at", title: "最近支付时间", minWidth: "170px" },
-    { title: "操作", width: "150px", fixed: "right", slots: { default: "row-operate" } }
+    { title: "操作", width: "220px", fixed: "right", slots: { default: "row-operate" } }
   ],
   proxyConfig: {
     seq: true,
@@ -106,6 +106,27 @@ function goDetail(row) {
 function goPoints(row) {
   router.push(`/customer-management/${row.id}/points-logs`)
 }
+
+function handleRecharge(row) {
+  ElMessageBox.prompt(`请输入给用户 ${row.username} 充值的积分数量`, "充值积分", {
+    confirmButtonText: "确定",
+    cancelButtonText: "取消",
+    inputValue: "",
+    inputPlaceholder: "请输入积分数量",
+    inputValidator: (value) => {
+      if (!value || !String(value).trim()) return "请输入积分数量"
+      if (!/^\d+$/.test(String(value).trim())) return "积分数量必须为正整数"
+      if (Number(String(value).trim()) <= 0) return "积分数量必须大于 0"
+      return true
+    }
+  }).then(({ value }) => {
+    const points = Number(String(value).trim())
+    rechargeCustomerApi(row.id, { points }).then(() => {
+      ElMessage.success("充值成功")
+      xGridDom.value?.commitProxy("query")
+    })
+  }).catch(() => {})
+}
 </script>
 
 <template>
@@ -119,6 +140,9 @@ function goPoints(row) {
       <template #row-operate="{ row }">
         <el-button link type="primary" @click="goDetail(row)">
           详情
+        </el-button>
+        <el-button link type="success" @click="handleRecharge(row)">
+          充值
         </el-button>
         <el-button link type="warning" @click="goPoints(row)">
           积分流水

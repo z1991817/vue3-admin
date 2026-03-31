@@ -23,3 +23,11 @@ export function getCustomerPointsLogsApi(id: number | string, params: Customers.
     params
   })
 }
+
+export function rechargeCustomerApi(id: number | string, data: Customers.CustomerRechargeRequestData) {
+  return request<Customers.CustomerRechargeResponseData>({
+    url: `admin/customers/${id}/recharge`,
+    method: "post",
+    data
+  })
+}
