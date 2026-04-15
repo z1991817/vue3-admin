@@ -1,10 +1,13 @@
-﻿<script setup>
+<script setup>
 import { createModelApi, deleteModelApi, getModelApi, updateModelApi } from "@/common/apis/models"
+
+const router = useRouter()
 
 const textMap = {
   searchPlaceholder: "请输入模型名称",
   search: "查询",
   reset: "重置",
+  allStatus: "全部状态",
   add: "新增模型",
   edit: "编辑模型",
   create: "新增模型",
@@ -14,51 +17,113 @@ const textMap = {
   description: "描述",
   aspectRatio: "尺寸",
   status: "状态",
-  show: "显示",
-  hide: "隐藏",
-  consumePoints: "消耗积分",
+  enabled: "启用",
+  disabled: "停用",
+  consumePoints: "模型默认积分",
   createdAt: "创建时间",
   action: "操作",
   editAction: "编辑",
   deleteAction: "删除",
+  skuAction: "SKU 管理",
   success: "操作成功",
   deleteSuccess: "删除成功",
   confirmTitle: "提示",
-  confirmDelete: name => `确定 <strong style="color: var(--el-color-danger);"> 删除 </strong> 模型 <strong style="color: var(--el-color-primary);"> ${name} </strong> 吗？`,
+  confirmDelete: name => `确定 <strong style=\"color: var(--el-color-danger);\"> 删除 </strong> 模型 <strong style=\"color: var(--el-color-primary);\"> ${name} </strong> 吗？删除前请确保该模型下 SKU 已处理。`,
   cancel: "取消",
   confirm: "确定",
   inputName: "请输入模型名称",
-  inputModelKey: "请输入模型Key",
+  inputModelKey: "请输入模型Key（可选）",
   inputManufacturer: "请输入厂家",
   inputDescription: "请输入描述",
-  inputAspectRatio: "请选择尺寸",
   inputStatus: "请选择状态",
-  inputConsumePoints: "请输入消耗积分",
+  inputConsumePoints: "请输入模型默认积分",
   invalidBlank: "空格无效",
-  invalidConsumePoints: "消耗积分不能小于 0"
+  invalidConsumePoints: "积分必须是大于等于 0 的整数"
 }
-const sizeOptions = ["1:1", "16:9", "9:16", "4:3", "3:4"]
-const statusOptions = [
-  { label: textMap.show, value: 1 },
-  { label: textMap.hide, value: 0 }
+
+const preferredAspectRatioOrder = ["1:1", "3:4", "4:3", "9:16", "16:9"]
+const defaultAspectRatioOptions = [...preferredAspectRatioOrder]
+
+function normalizeAspectRatioText(value) {
+  return String(value).trim().replace(/\s+/g, "").replace(/：/g, ":")
+}
+
+function getAspectRatioSortValue(value) {
+  const matched = normalizeAspectRatioText(value).match(/^(\d+):(\d+)$/)
+  if (!matched) return Number.POSITIVE_INFINITY
+  const width = Number(matched[1])
+  const height = Number(matched[2])
+  if (width <= 0 || height <= 0) return Number.POSITIVE_INFINITY
+  return width / height
+}
+
+function sortAspectRatios(values) {
+  const orderMap = new Map(preferredAspectRatioOrder.map((item, index) => [item, index]))
+  return [...new Set(values.map(item => normalizeAspectRatioText(item)).filter(Boolean))].sort((a, b) => {
+    const aOrder = orderMap.get(a)
+    const bOrder = orderMap.get(b)
+    const aInPreferred = aOrder !== undefined
+    const bInPreferred = bOrder !== undefined
+    if (aInPreferred && bInPreferred) {
+      return aOrder - bOrder
+    }
+    if (aInPreferred) return -1
+    if (bInPreferred) return 1
+    const aValue = getAspectRatioSortValue(a)
+    const bValue = getAspectRatioSortValue(b)
+    if (Number.isFinite(aValue) && Number.isFinite(bValue) && aValue !== bValue) return aValue - bValue
+    return a.localeCompare(b)
+  })
+}
+
+const aspectRatioOptions = ref(sortAspectRatios(defaultAspectRatioOptions))
+
+const queryStatusOptions = [
+  { label: textMap.allStatus, value: "" },
+  { label: textMap.enabled, value: 1 },
+  { label: textMap.disabled, value: 0 }
 ]
 
-function normalizeConsumePoints(value) {
-  if (value === undefined || value === null || value === "") return undefined
-  const points = Number(value)
-  return Number.isNaN(points) ? undefined : points
-}
+const statusOptions = [
+  { label: textMap.enabled, value: 1 },
+  { label: textMap.disabled, value: 0 }
+]
 
 function normalizeStatus(value) {
   return Number(value) === 0 ? 0 : 1
 }
 
-function normalizeAspectRatio(value) {
-  if (Array.isArray(value)) return value
+function normalizeInteger(value) {
+  if (value === undefined || value === null || value === "") return undefined
+  const parsed = Number(value)
+  if (!Number.isInteger(parsed) || parsed < 0) return undefined
+  return parsed
+}
+
+function normalizeAspectRatios(value) {
+  if (Array.isArray(value)) {
+    return value.map(item => normalizeAspectRatioText(item)).filter(Boolean)
+  }
   if (typeof value === "string") {
-    return value.split(",").map(item => item.trim()).filter(Boolean)
+    return value.split(",").map(item => normalizeAspectRatioText(item)).filter(Boolean)
   }
   return []
+}
+
+function getModelAspectRatios(model) {
+  if (Array.isArray(model?.aspect_ratios)) return normalizeAspectRatios(model.aspect_ratios)
+  return normalizeAspectRatios(model?.aspect_ratio)
+}
+
+function getAspectRatioText(row) {
+  const ratios = sortAspectRatios(getModelAspectRatios(row))
+  if (ratios.length === 0) return "-"
+  return ratios.join(" / ")
+}
+
+function syncAspectRatioOptions(value) {
+  const dynamicOptions = normalizeAspectRatios(value)
+  aspectRatioOptions.value = sortAspectRatios([...defaultAspectRatioOptions, ...dynamicOptions])
 }
 
 const xGridDom = useTemplateRef("xGridDom")
@@ -76,6 +141,16 @@ const xGridOpt = reactive({
           name: "VxeInput",
           props: {
             placeholder: textMap.searchPlaceholder,
+            clearable: true
+          }
+        }
+      },
+      {
+        field: "status",
+        itemRender: {
+          name: "$select",
+          options: queryStatusOptions,
+          props: {
             clearable: true
           }
         }
@@ -135,12 +210,15 @@ const xGridOpt = reactive({
     {
       field: "aspect_ratio",
       title: textMap.aspectRatio,
-      width: "140px"
+      minWidth: "180px",
+      slots: {
+        default: "aspect-ratio-column"
+      }
     },
     {
       field: "consume_points",
       title: textMap.consumePoints,
-      width: "120px"
+      width: "140px"
     },
     {
       field: "status",
@@ -157,7 +235,7 @@ const xGridOpt = reactive({
     },
     {
       title: textMap.action,
-      width: "150px",
+      width: "220px",
       fixed: "right",
       showOverflow: false,
       slots: {
@@ -187,11 +265,15 @@ const xGridOpt = reactive({
             xGridOpt.loading = false
             resolve({ total, result })
           }
-          getModelApi({
-            name: form.name || "",
-            size: page.pageSize,
-            currentPage: page.currentPage
-          }).then(callback).catch(callback)
+          const params = {
+            name: form.name?.trim() || "",
+            pageSize: page.pageSize,
+            page: page.currentPage
+          }
+          if (form.status !== "" && form.status !== undefined && form.status !== null) {
+            params.status = normalizeStatus(form.status)
+          }
+          getModelApi(params).then(callback).catch(callback)
         })
       }
     }
@@ -207,13 +289,14 @@ const crudStore = reactive({
       crudStore.isUpdate = true
       xModalOpt.title = textMap.edit
       xFormOpt.data.id = row.id
-      xFormOpt.data.name = row.name
+      xFormOpt.data.name = row.name || ""
       xFormOpt.data.model_key = row.model_key || ""
       xFormOpt.data.manufacturer = row.manufacturer || ""
-      xFormOpt.data.description = row.description
-      xFormOpt.data.aspect_ratio = normalizeAspectRatio(row.aspect_ratio)
+      xFormOpt.data.description = row.description || ""
+      xFormOpt.data.aspect_ratio = sortAspectRatios(getModelAspectRatios(row))
+      syncAspectRatioOptions(xFormOpt.data.aspect_ratio)
       xFormOpt.data.status = normalizeStatus(row.status)
-      xFormOpt.data.consume_points = normalizeConsumePoints(row.consume_points)
+      xFormOpt.data.consume_points = normalizeInteger(row.consume_points)
     } else {
       crudStore.isUpdate = false
       xModalOpt.title = textMap.create
@@ -223,6 +306,7 @@ const crudStore = reactive({
       xFormOpt.data.manufacturer = ""
       xFormOpt.data.description = ""
       xFormOpt.data.aspect_ratio = []
+      syncAspectRatioOptions()
       xFormOpt.data.status = 1
       xFormOpt.data.consume_points = undefined
     }
@@ -236,13 +320,18 @@ const crudStore = reactive({
     xFormDom.value?.validate((errMap) => {
       if (errMap) return
       xFormOpt.loading = true
-      const { aspect_ratio, ...restData } = xFormOpt.data
+      const points = normalizeInteger(xFormOpt.data.consume_points)
+      const modelKey = xFormOpt.data.model_key.trim()
+      const manufacturer = xFormOpt.data.manufacturer.trim()
+      const description = xFormOpt.data.description.trim()
       const payload = {
-        ...restData,
-        model_key: xFormOpt.data.model_key.trim(),
-        aspect_ratios: aspect_ratio,
+        name: xFormOpt.data.name.trim(),
+        model_key: modelKey || undefined,
+        manufacturer: manufacturer || undefined,
+        description: description || undefined,
+        aspect_ratios: sortAspectRatios(normalizeAspectRatios(xFormOpt.data.aspect_ratio)),
         status: normalizeStatus(xFormOpt.data.status),
-        consume_points: normalizeConsumePoints(xFormOpt.data.consume_points)
+        consume_points: points
       }
       const callback = () => {
         xFormOpt.loading = false
@@ -251,8 +340,13 @@ const crudStore = reactive({
         !crudStore.isUpdate && crudStore.afterInsert()
         crudStore.commitQuery()
       }
-      const api = crudStore.isUpdate ? updateModelApi : createModelApi
-      api(payload).then(callback).catch(() => {
+      const request = crudStore.isUpdate
+        ? updateModelApi({
+            id: xFormOpt.data.id,
+            ...payload
+          })
+        : createModelApi(payload)
+      request.then(callback).catch(() => {
         xFormOpt.loading = false
       })
     })
@@ -290,6 +384,14 @@ const crudStore = reactive({
     if (pager && pager.currentPage > 1 && tableData.length === 1) {
       --pager.currentPage
     }
+  },
+  goSkuPage: (row) => {
+    router.push({
+      path: `/modelManagement/skus/${row.id}`,
+      query: {
+        modelName: row.name
+      }
+    })
   }
 })
 
@@ -308,7 +410,7 @@ const xModalOpt = reactive({
 const xFormDom = useTemplateRef("xFormDom")
 const xFormOpt = reactive({
   span: 24,
-  titleWidth: "100px",
+  titleWidth: "120px",
   loading: false,
   titleColon: false,
   data: {
@@ -335,29 +437,6 @@ const xFormOpt = reactive({
         }
       }
     ],
-    model_key: [
-      {
-        required: true,
-        validator: ({ itemValue }) => {
-          switch (true) {
-            case !itemValue:
-              return new Error(textMap.inputModelKey)
-            case !itemValue.trim():
-              return new Error(textMap.invalidBlank)
-          }
-        }
-      }
-    ],
-    aspect_ratio: [
-      {
-        required: true,
-        validator: ({ itemValue }) => {
-          if (!Array.isArray(itemValue) || itemValue.length === 0) {
-            return new Error(textMap.inputAspectRatio)
-          }
-        }
-      }
-    ],
     status: [
       {
         required: true,
@@ -372,11 +451,7 @@ const xFormOpt = reactive({
       {
         required: true,
         validator: ({ itemValue }) => {
-          const points = normalizeConsumePoints(itemValue)
-          if (points === undefined) {
-            return new Error(textMap.inputConsumePoints)
-          }
-          if (points < 0) {
+          if (normalizeInteger(itemValue) === undefined) {
             return new Error(textMap.invalidConsumePoints)
           }
         }
@@ -405,6 +480,16 @@ const xFormOpt = reactive({
       }
     },
     {
+      field: "manufacturer",
+      title: textMap.manufacturer,
+      itemRender: {
+        name: "$input",
+        props: {
+          placeholder: textMap.inputManufacturer
+        }
+      }
+    },
+    {
       field: "description",
       title: textMap.description,
       itemRender: {
@@ -413,16 +498,6 @@ const xFormOpt = reactive({
           placeholder: textMap.inputDescription,
           type: "textarea",
           rows: 4
-        }
-      }
-    },
-    {
-      field: "manufacturer",
-      title: textMap.manufacturer,
-      itemRender: {
-        name: "$input",
-        props: {
-          placeholder: textMap.inputManufacturer
         }
       }
     },
@@ -490,12 +565,18 @@ const xFormOpt = reactive({
           {{ textMap.add }}
         </vxe-button>
       </template>
+      <template #aspect-ratio-column="{ row }">
+        <span>{{ getAspectRatioText(row) }}</span>
+      </template>
       <template #status-column="{ row, column }">
         <el-tag :type="Number(row[column.field]) === 1 ? 'success' : 'info'" effect="plain">
-          {{ Number(row[column.field]) === 1 ? textMap.show : textMap.hide }}
+          {{ Number(row[column.field]) === 1 ? textMap.enabled : textMap.disabled }}
         </el-tag>
       </template>
       <template #row-operate="{ row }">
+        <el-button link type="success" @click="crudStore.goSkuPage(row)">
+          {{ textMap.skuAction }}
+        </el-button>
         <el-button link type="primary" @click="crudStore.onShowModal(row)">
           {{ textMap.editAction }}
         </el-button>
@@ -508,7 +589,7 @@ const xFormOpt = reactive({
       <vxe-form ref="xFormDom" v-bind="xFormOpt">
         <template #aspect-ratio-slot>
           <el-checkbox-group v-model="xFormOpt.data.aspect_ratio">
-            <el-checkbox v-for="item in sizeOptions" :key="item" :value="item">
+            <el-checkbox v-for="item in aspectRatioOptions" :key="item" :value="item">
               {{ item }}
             </el-checkbox>
           </el-checkbox-group>

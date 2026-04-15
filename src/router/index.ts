@@ -296,6 +296,40 @@ export const dynamicRoutes: RouteRecordRaw[] = [
           title: "模型列表",
           roles: ["admin"]
         }
+      },
+      {
+        path: "skus/:modelId",
+        component: () => import("@/pages/modelManagement/skus.vue"),
+        name: "ModelManagementSkus",
+        meta: {
+          title: "SKU 管理",
+          hidden: true,
+          roles: ["admin"],
+          activeMenu: "/modelManagement/list"
+        }
+      }
+    ]
+  },
+  {
+    path: "/image-generation-records",
+    component: Layouts,
+    redirect: "/image-generation-records/list",
+    name: "ImageGenerationRecords",
+    meta: {
+      title: "生图记录",
+      elIcon: "PictureFilled",
+      roles: ["admin", "editor"],
+      alwaysShow: true
+    },
+    children: [
+      {
+        path: "list",
+        component: () => import("@/pages/imageGenerationRecords/list.vue"),
+        name: "ImageGenerationRecordsList",
+        meta: {
+          title: "生图记录列表",
+          roles: ["admin", "editor"]
+        }
       }
     ]
   },

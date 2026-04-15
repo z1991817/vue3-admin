@@ -1,39 +1,46 @@
-export interface CreateOrUpdateModelRequestData {
-  id?: number
+export type ModelStatus = 0 | 1
+
+export interface CreateModelRequestData {
   name: string
-  model_key: string
+  model_key?: string
   manufacturer?: string
   description?: string
-  aspect_ratios: string[]
-  status: number
-  consume_points: number | undefined
+  aspect_ratios?: string[]
+  aspect_ratio?: string
+  status?: ModelStatus
+  consume_points: number
 }
 
-export interface ModelRequestData {
-  /** 当前页码 */
-  currentPage: number
-  /** 查询条数 */
-  size: number
-  /** 查询参数：模型名称 */
+export interface UpdateModelRequestData extends Partial<CreateModelRequestData> {
+  id: number
+}
+
+export interface ModelListRequestData {
+  page: number
+  pageSize: number
   name?: string
-  /** 查询参数：模型 key */
-  model_key?: string
+  status?: ModelStatus
 }
 
 export interface ModelData {
   id: number
   name: string
-  model_key: string
+  model_key?: string
   manufacturer?: string
-  description: string
-  aspect_ratio: string[]
-  status: number
+  description?: string
+  aspect_ratio?: string | string[]
+  aspect_ratios?: string[]
+  status: ModelStatus
   consume_points: number
   created_at: string
   updated_at?: string
 }
 
-export type ModelResponseData = ApiResponseData<{
+export type ModelListResponseData = ApiResponseData<{
   list: ModelData[]
   total: number
+  page?: number
+  pageSize?: number
 }>
+
+export type ModelDetailResponseData = ApiResponseData<ModelData>

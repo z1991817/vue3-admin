@@ -1,8 +1,8 @@
-﻿import type * as Models from "./type"
+import type * as Models from "./type"
 import { request } from "@/http/axios"
 
 /** 增 */
-export function createModelApi(data: Models.CreateOrUpdateModelRequestData) {
+export function createModelApi(data: Models.CreateModelRequestData) {
   return request({
     url: "/admin/models",
     method: "post",
@@ -19,7 +19,7 @@ export function deleteModelApi(id: number) {
 }
 
 /** 改 */
-export function updateModelApi(data: Models.CreateOrUpdateModelRequestData) {
+export function updateModelApi(data: Models.UpdateModelRequestData) {
   return request({
     url: `/admin/models/${data.id}`,
     method: "put",
@@ -27,11 +27,19 @@ export function updateModelApi(data: Models.CreateOrUpdateModelRequestData) {
   })
 }
 
-/** 查 */
-export function getModelApi(params: Models.ModelRequestData) {
-  return request<Models.ModelResponseData>({
+/** 列表 */
+export function getModelApi(params: Models.ModelListRequestData) {
+  return request<Models.ModelListResponseData>({
     url: "/admin/models",
     method: "get",
     params
+  })
+}
+
+/** 详情 */
+export function getModelDetailApi(id: number | string) {
+  return request<Models.ModelDetailResponseData>({
+    url: `/admin/models/${id}`,
+    method: "get"
   })
 }
