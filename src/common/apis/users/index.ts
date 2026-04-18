@@ -16,6 +16,14 @@ export function getAdminUsersApi(params: Users.AdminUserListRequestData) {
   })
 }
 
+export function resetAdminUserPasswordApi(id: number | string, data: Users.AdminResetPasswordRequestData) {
+  return request<Users.AdminResetPasswordResponseData>({
+    url: `admin/users/${id}/password`,
+    method: "post",
+    data
+  })
+}
+
 export function logoutApi() {
   return request<ApiResponseData<null>>({
     url: "admin/logout",

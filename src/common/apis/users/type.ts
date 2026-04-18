@@ -23,9 +23,15 @@ export interface AdminUserListRequestData {
   pageSize?: number
 }
 
+export interface AdminResetPasswordRequestData {
+  password: string
+}
+
 export type CurrentUserResponseData = ApiResponseData<AdminProfileData>
 
 export type AdminUserListResponseData = ApiResponseData<{
   total: number
   list: AdminUserListItem[]
 }>
+
+export type AdminResetPasswordResponseData = ApiResponseData<null>

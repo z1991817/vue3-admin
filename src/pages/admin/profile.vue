@@ -1,5 +1,5 @@
 <script setup>
-import { getCurrentUserApi } from "@/common/apis/users"
+import { getCurrentUserApi, resetAdminUserPasswordApi } from "@/common/apis/users"
 import { useUserStore } from "@/pinia/stores/user"
 
 const loading = ref(false)
@@ -30,6 +30,32 @@ async function loadProfile() {
 onMounted(() => {
   loadProfile()
 })
+
+function handleResetPassword() {
+  if (!profile.id) {
+    ElMessage.warning("管理员信息未加载完成")
+    return
+  }
+
+  ElMessageBox.prompt(`请输入管理员 ${profile.username} 的新密码`, "重置密码", {
+    confirmButtonText: "确定",
+    cancelButtonText: "取消",
+    inputType: "password",
+    inputValue: "",
+    inputPlaceholder: "请输入新密码（至少 6 位）",
+    inputValidator: (value) => {
+      const password = String(value || "").trim()
+      if (!password) return "请输入新密码"
+      if (password.length < 6) return "密码长度不能少于 6 位"
+      return true
+    }
+  }).then(({ value }) => {
+    const password = String(value || "").trim()
+    resetAdminUserPasswordApi(profile.id, { password }).then(() => {
+      ElMessage.success("密码重置成功")
+    })
+  }).catch(() => {})
+}
 </script>
 
 <template>
@@ -41,9 +67,14 @@ onMounted(() => {
             <h3>管理员资料</h3>
             <p>展示当前登录管理员的账号信息和最近登录状态。</p>
           </div>
-          <el-button type="primary" plain @click="loadProfile">
-            刷新
-          </el-button>
+          <div class="header-actions">
+            <el-button type="danger" plain @click="handleResetPassword">
+              重置密码
+            </el-button>
+            <el-button type="primary" plain @click="loadProfile">
+              刷新
+            </el-button>
+          </div>
         </div>
       </template>
 
@@ -75,5 +106,11 @@ onMounted(() => {
     margin: 0;
     color: var(--el-text-color-secondary);
   }
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 </style>

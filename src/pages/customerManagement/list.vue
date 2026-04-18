@@ -1,5 +1,5 @@
 <script setup>
-import { getCustomerListApi, rechargeCustomerApi } from "@/common/apis/customers"
+import { getCustomerListApi, rechargeCustomerApi, resetCustomerPasswordApi } from "@/common/apis/customers"
 
 const router = useRouter()
 const xGridDom = useTemplateRef("xGridDom")
@@ -63,7 +63,7 @@ const xGridOpt = reactive({
     { field: "total_recharge_amount", title: "累计充值金额", width: "130px" },
     { field: "status", title: "状态", width: "100px", slots: { default: "status-column" } },
     { field: "last_paid_at", title: "最近支付时间", minWidth: "170px" },
-    { title: "操作", width: "220px", fixed: "right", slots: { default: "row-operate" } }
+    { title: "操作", width: "280px", fixed: "right", slots: { default: "row-operate" } }
   ],
   proxyConfig: {
     seq: true,
@@ -127,6 +127,27 @@ function handleRecharge(row) {
     })
   }).catch(() => {})
 }
+
+function handleResetPassword(row) {
+  ElMessageBox.prompt(`请输入用户 ${row.username} 的新密码`, "重置密码", {
+    confirmButtonText: "确定",
+    cancelButtonText: "取消",
+    inputType: "password",
+    inputValue: "",
+    inputPlaceholder: "请输入新密码（至少 6 位）",
+    inputValidator: (value) => {
+      const password = String(value || "").trim()
+      if (!password) return "请输入新密码"
+      if (password.length < 6) return "密码长度不能少于 6 位"
+      return true
+    }
+  }).then(({ value }) => {
+    const password = String(value || "").trim()
+    resetCustomerPasswordApi(row.id, { password }).then(() => {
+      ElMessage.success("密码重置成功")
+    })
+  }).catch(() => {})
+}
 </script>
 
 <template>
@@ -143,6 +164,9 @@ function handleRecharge(row) {
         </el-button>
         <el-button link type="success" @click="handleRecharge(row)">
           充值
+        </el-button>
+        <el-button link type="danger" @click="handleResetPassword(row)">
+          重置密码
         </el-button>
         <el-button link type="warning" @click="goPoints(row)">
           积分流水

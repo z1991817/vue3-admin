@@ -65,6 +65,10 @@ export interface CustomerRechargeRequestData {
   points: number
 }
 
+export interface CustomerResetPasswordRequestData {
+  password: string
+}
+
 export type CustomerListResponseData = ApiResponseData<{
   total: number
   page: number
@@ -83,3 +87,5 @@ export type CustomerPointsLogsResponseData = ApiResponseData<{
 }>
 
 export type CustomerRechargeResponseData = ApiResponseData<any>
+
+export type CustomerResetPasswordResponseData = ApiResponseData<null>

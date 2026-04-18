@@ -31,3 +31,11 @@ export function rechargeCustomerApi(id: number | string, data: Customers.Custome
     data
   })
 }
+
+export function resetCustomerPasswordApi(id: number | string, data: Customers.CustomerResetPasswordRequestData) {
+  return request<Customers.CustomerResetPasswordResponseData>({
+    url: `admin/customers/${id}/password`,
+    method: "post",
+    data
+  })
+}
