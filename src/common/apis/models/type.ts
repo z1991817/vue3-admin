@@ -31,9 +31,15 @@ export interface ModelData {
   aspect_ratio?: string | string[]
   aspect_ratios?: string[]
   status: ModelStatus
+  sort_order?: number
   consume_points: number
   created_at: string
   updated_at?: string
+}
+
+export interface UpdateModelSortRequestData {
+  id: number
+  sort_order: number
 }
 
 export type ModelListResponseData = ApiResponseData<{

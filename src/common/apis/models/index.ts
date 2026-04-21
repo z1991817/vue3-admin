@@ -27,6 +27,17 @@ export function updateModelApi(data: Models.UpdateModelRequestData) {
   })
 }
 
+/** 更新模型排序 */
+export function updateModelSortApi(data: Models.UpdateModelSortRequestData) {
+  return request({
+    url: `/admin/models/${data.id}/sort`,
+    method: "put",
+    data: {
+      sort_order: data.sort_order
+    }
+  })
+}
+
 /** 列表 */
 export function getModelApi(params: Models.ModelListRequestData) {
   return request<Models.ModelListResponseData>({

@@ -1,5 +1,5 @@
 <script setup>
-import { createModelApi, deleteModelApi, getModelApi, updateModelApi } from "@/common/apis/models"
+import { createModelApi, deleteModelApi, getModelApi, updateModelApi, updateModelSortApi } from "@/common/apis/models"
 
 const router = useRouter()
 
@@ -16,6 +16,7 @@ const textMap = {
   manufacturer: "厂家",
   description: "描述",
   aspectRatio: "尺寸",
+  sortOrder: "排序",
   status: "状态",
   enabled: "启用",
   disabled: "停用",
@@ -38,10 +39,11 @@ const textMap = {
   inputStatus: "请选择状态",
   inputConsumePoints: "请输入模型默认积分",
   invalidBlank: "空格无效",
-  invalidConsumePoints: "积分必须是大于等于 0 的整数"
+  invalidConsumePoints: "积分必须是大于等于 0 的整数",
+  invalidSortOrder: "排序值必须是大于等于 0 的整数"
 }
 
-const preferredAspectRatioOrder = ["1:1", "3:4", "4:3", "9:16", "16:9"]
+const preferredAspectRatioOrder = ["1:1", "2:3", "3:4", "4:3", "3:2", "9:16", "16:9"]
 const defaultAspectRatioOptions = [...preferredAspectRatioOrder]
 
 function normalizeAspectRatioText(value) {
@@ -221,6 +223,14 @@ const xGridOpt = reactive({
       width: "140px"
     },
     {
+      field: "sort_order",
+      title: textMap.sortOrder,
+      width: "120px",
+      slots: {
+        default: "sort-order-column"
+      }
+    },
+    {
       field: "status",
       title: textMap.status,
       width: "100px",
@@ -391,6 +401,25 @@ const crudStore = reactive({
       query: {
         modelName: row.name
       }
+    })
+  },
+  onChangeSortOrder: (row, currentValue, oldValue) => {
+    const nextSortOrder = normalizeInteger(currentValue)
+    const previousSortOrder = normalizeInteger(oldValue)
+    if (nextSortOrder === undefined) {
+      ElMessage.error(textMap.invalidSortOrder)
+      row.sort_order = previousSortOrder ?? 0
+      return
+    }
+    if (nextSortOrder === previousSortOrder) return
+    updateModelSortApi({
+      id: row.id,
+      sort_order: nextSortOrder
+    }).then(() => {
+      ElMessage.success(textMap.success)
+      crudStore.commitQuery()
+    }).catch(() => {
+      row.sort_order = previousSortOrder ?? 0
     })
   }
 })
@@ -568,6 +597,17 @@ const xFormOpt = reactive({
       <template #aspect-ratio-column="{ row }">
         <span>{{ getAspectRatioText(row) }}</span>
       </template>
+      <template #sort-order-column="{ row }">
+        <el-input-number
+          class="sort-order-input"
+          v-model="row.sort_order"
+          :min="0"
+          :step="1"
+          :precision="0"
+          controls-position="right"
+          @change="(currentValue, oldValue) => crudStore.onChangeSortOrder(row, currentValue, oldValue)"
+        />
+      </template>
       <template #status-column="{ row, column }">
         <el-tag :type="Number(row[column.field]) === 1 ? 'success' : 'info'" effect="plain">
           {{ Number(row[column.field]) === 1 ? textMap.enabled : textMap.disabled }}
@@ -606,4 +646,7 @@ const xFormOpt = reactive({
   </div>
 </template>
 
-<style lang="sass" scoped></style>
+<style lang="sass" scoped>
+:deep(.sort-order-input)
+  width: 100%
+</style>
