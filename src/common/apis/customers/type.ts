@@ -69,6 +69,16 @@ export interface CustomerResetPasswordRequestData {
   password: string
 }
 
+export interface CustomerUpdateStatusRequestData {
+  status: 0 | 1
+}
+
+export interface CustomerStatusData {
+  id: number
+  username: string
+  status: 0 | 1
+}
+
 export type CustomerListResponseData = ApiResponseData<{
   total: number
   page: number
@@ -89,3 +99,5 @@ export type CustomerPointsLogsResponseData = ApiResponseData<{
 export type CustomerRechargeResponseData = ApiResponseData<any>
 
 export type CustomerResetPasswordResponseData = ApiResponseData<null>
+
+export type CustomerUpdateStatusResponseData = ApiResponseData<CustomerStatusData>

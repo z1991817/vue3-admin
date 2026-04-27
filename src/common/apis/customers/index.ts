@@ -39,3 +39,11 @@ export function resetCustomerPasswordApi(id: number | string, data: Customers.Cu
     data
   })
 }
+
+export function updateCustomerStatusApi(id: number | string, data: Customers.CustomerUpdateStatusRequestData) {
+  return request<Customers.CustomerUpdateStatusResponseData>({
+    url: `admin/customers/${id}/status`,
+    method: "post",
+    data
+  })
+}

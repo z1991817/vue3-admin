@@ -1,8 +1,9 @@
 <script setup>
-import { getCustomerListApi, rechargeCustomerApi, resetCustomerPasswordApi } from "@/common/apis/customers"
+import { getCustomerListApi, rechargeCustomerApi, resetCustomerPasswordApi, updateCustomerStatusApi } from "@/common/apis/customers"
 
 const router = useRouter()
 const xGridDom = useTemplateRef("xGridDom")
+const statusLoadingMap = reactive({})
 
 const statusOptions = [
   { label: "全部状态", value: undefined },
@@ -63,7 +64,7 @@ const xGridOpt = reactive({
     { field: "total_recharge_amount", title: "累计充值金额", width: "130px" },
     { field: "status", title: "状态", width: "100px", slots: { default: "status-column" } },
     { field: "last_paid_at", title: "最近支付时间", minWidth: "170px" },
-    { title: "操作", width: "280px", fixed: "right", slots: { default: "row-operate" } }
+    { title: "操作", width: "360px", fixed: "right", slots: { default: "row-operate" } }
   ],
   proxyConfig: {
     seq: true,
@@ -148,6 +149,26 @@ function handleResetPassword(row) {
     })
   }).catch(() => {})
 }
+
+function handleToggleStatus(row) {
+  const targetStatus = row.status === 1 ? 0 : 1
+  const actionText = targetStatus === 1 ? "启用" : "禁用"
+  ElMessageBox.confirm(`确认${actionText}用户 ${row.username} 吗？`, `${actionText}用户`, {
+    confirmButtonText: "确定",
+    cancelButtonText: "取消",
+    type: "warning"
+  }).then(() => {
+    statusLoadingMap[row.id] = true
+    updateCustomerStatusApi(row.id, { status: targetStatus })
+      .then(() => {
+        ElMessage.success(`${actionText}成功`)
+        xGridDom.value?.commitProxy("query")
+      })
+      .finally(() => {
+        statusLoadingMap[row.id] = false
+      })
+  }).catch(() => {})
+}
 </script>
 
 <template>
@@ -167,6 +188,14 @@ function handleResetPassword(row) {
         </el-button>
         <el-button link type="danger" @click="handleResetPassword(row)">
           重置密码
+        </el-button>
+        <el-button
+          link
+          :type="row.status === 1 ? 'danger' : 'success'"
+          :loading="Boolean(statusLoadingMap[row.id])"
+          @click="handleToggleStatus(row)"
+        >
+          {{ row.status === 1 ? "禁用" : "启用" }}
         </el-button>
         <el-button link type="warning" @click="goPoints(row)">
           积分流水
