@@ -334,6 +334,29 @@ export const dynamicRoutes: RouteRecordRaw[] = [
     ]
   },
   {
+    path: "/prompt-library",
+    component: Layouts,
+    redirect: "/prompt-library/list",
+    name: "PromptLibrary",
+    meta: {
+      title: "提示词库",
+      roles: ["admin", "editor"]
+    },
+    children: [
+      {
+        path: "list",
+        component: () => import("@/pages/promptLibrary/list.vue"),
+        name: "PromptLibraryList",
+        meta: {
+          title: "提示词库",
+          elIcon: "Collection",
+          roles: ["admin", "editor"],
+          keepAlive: true
+        }
+      }
+    ]
+  },
+  {
     path: "/order-management",
     component: Layouts,
     redirect: "/order-management/list",
