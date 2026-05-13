@@ -1,4 +1,4 @@
-import type { AxiosInstance, AxiosRequestConfig } from "axios"
+import type { AxiosInstance, AxiosRequestConfig, InternalAxiosRequestConfig } from "axios"
 import { getToken } from "@@/utils/local-storage"
 import axios from "axios"
 import { get, merge } from "lodash-es"
@@ -10,6 +10,33 @@ function logout() {
   location.reload()
 }
 
+/** 是否禁用接口缓存（默认 true，即对 GET 请求追加防缓存处理） */
+const disableApiCache = import.meta.env.VITE_DISABLE_API_CACHE !== "false"
+
+/** 为 GET 请求追加时间戳参数，避免浏览器/CDN 复用旧响应 */
+function appendNoCacheQuery(config: InternalAxiosRequestConfig) {
+  const timestamp = Date.now()
+  if (config.params instanceof URLSearchParams) {
+    config.params.set("_t", String(timestamp))
+    return
+  }
+  if (typeof config.params === "object" && config.params !== null) {
+    config.params = {
+      ...(config.params as Record<string, unknown>),
+      _t: timestamp
+    }
+    return
+  }
+  config.params = { _t: timestamp }
+}
+
+/** 设置禁止缓存请求头 */
+function setNoCacheHeaders(config: InternalAxiosRequestConfig) {
+  config.headers.set("Cache-Control", "no-cache, no-store, must-revalidate")
+  config.headers.set("Pragma", "no-cache")
+  config.headers.set("Expires", "0")
+}
+
 /** 创建请求实例 */
 function createInstance() {
   // 创建一个 axios 实例命名为 instance
@@ -17,7 +44,13 @@ function createInstance() {
   // 请求拦截器
   instance.interceptors.request.use(
     // 发送之前
-    config => config,
+    (config) => {
+      if (disableApiCache && config.method?.toLowerCase() === "get") {
+        appendNoCacheQuery(config)
+        setNoCacheHeaders(config)
+      }
+      return config
+    },
     // 发送失败
     error => Promise.reject(error)
   )
